@@ -25,6 +25,7 @@ function App() {
   const [phaseName, setPhaseName] = useState('')
   const [showForm, setShowForm] = useState<boolean>(false);
   const [localProject, setLocalProject] = useLocalStorage('project', defaultProject)
+  const [randomFact, setRandomFact] = useState<string>('');
 
   const markStepAsComplete = (stepId: number, phaseId: number) => {
 
@@ -34,6 +35,10 @@ function App() {
         let steps = phase?.steps.map(step => step.id === stepId ?  {...step, isComplete: !step.isComplete} : step)
         // Evaluate the Done status
         let isDone = steps.filter(step => step.isComplete).length === steps.length
+
+        if(isDone) {
+          fetchFact()
+        }
 
         return {
           ...phase, steps, isDone
@@ -105,6 +110,12 @@ function App() {
     setLocalProject(project)
   }, [project])
 
+  const fetchFact = () => {
+    fetch('https://uselessfacts.jsph.pl/random.json')
+      .then((response) => response.json())
+      .then(data => setRandomFact(data.text))
+  }
+
 
   return (
     <div className="App">
@@ -112,7 +123,7 @@ function App() {
         <h1>Startup progress tracker</h1>
       </header>
 
-      <div className="main-container">
+      {!randomFact ? <div className="main-container">
         {project.map((phase: IPhase) => 
           <ProjectPhase 
             markComplete={(stepId) => markStepAsComplete(stepId, phase.id)} 
@@ -129,7 +140,15 @@ function App() {
           onClick={() => setShowForm(!showForm)}>
           Add Phase
         </button>}
-      </div>
+      </div> : 
+      <>
+        <p className="fact">{randomFact}</p>
+        <button
+          className="project-phase__step-button"
+          onClick={() => setRandomFact('')}>
+          Clear
+        </button>
+      </>}
     </div>
   );
 }
